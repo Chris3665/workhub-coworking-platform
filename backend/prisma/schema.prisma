@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+
+enum SpaceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  roleId       Int           @map("role_id")
+  fullName     String        @map("full_name") @db.VarChar(120)
+  email        String        @unique @db.VarChar(150)
+  passwordHash String        @map("password_hash") @db.VarChar(255)
+  phone        String?       @db.VarChar(30)
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  role         Role          @relation(fields: [roleId], references: [id])
+  ownedSpaces  Space[]       @relation("OwnerSpaces")
+  reservations Reservation[]
+
+  @@map("users")
+}
+
+model Space {
+  id           Int            @id @default(autoincrement())
+  ownerId      Int            @map("owner_id")
+  name         String         @db.VarChar(150)
+  description  String         @db.Text
+  address      String         @db.VarChar(255)
+  capacity     Int
+  hourlyRate   Decimal        @map("hourly_rate") @db.Decimal(10, 2)
+  dailyRate    Decimal        @map("daily_rate") @db.Decimal(10, 2)
+  status       SpaceStatus    @default(PENDING)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  owner        User           @relation("OwnerSpaces", fields: [ownerId], references: [id], onDelete: Restrict)
+  images       SpaceImage[]
+  amenities    SpaceAmenity[]
+  reservations Reservation[]
+
+  @@index([status, capacity])
+  @@map("spaces")
+}
+
+model SpaceImage {
+  id        Int      @id @default(autoincrement())
+  spaceId   Int      @map("space_id")
+  url       String   @db.Text
+  publicId  String?  @map("public_id") @db.VarChar(255)
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_images")
+}
+
+model Amenity {
+  id     Int            @id @default(autoincrement())
+  name   String         @unique @db.VarChar(100)
+  icon   String?        @db.VarChar(100)
+  spaces SpaceAmenity[]
+
+  @@map("amenities")
+}
+
+model SpaceAmenity {
+  spaceId   Int     @map("space_id")
+  amenityId Int     @map("amenity_id")
+
+  space     Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  amenity   Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, amenityId])
+  @@map("space_amenities")
+}
+
+model Reservation {
+  id         Int               @id @default(autoincrement())
+  spaceId    Int               @map("space_id")
+  userId     Int               @map("user_id")
+  startTime  DateTime          @map("start_time") @db.Timestamptz(3)
+  endTime    DateTime          @map("end_time") @db.Timestamptz(3)
+  totalPrice Decimal           @map("total_price") @db.Decimal(10, 2)
+  status     ReservationStatus @default(PENDING)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  space      Space             @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([spaceId, startTime, endTime, status])
+  @@index([userId, startTime])
+  @@map("reservations")
+}
