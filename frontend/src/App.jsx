@@ -109,11 +109,18 @@ export default function App() {
             <button type="submit" style={{ width: '100%', padding: '0.75rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
               {view === 'login' ? 'Entrar' : 'Registrarse'}
             </button>
+            <button
+  type="button"
+  onClick={() => setView('catalog')}
+  style={{ width: '100%', padding: '0.6rem', marginTop: '0.75rem', background: 'transparent', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer' }}
+>
+  ← Volver al catálogo
+</button>
           </form>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h1 style={{ margin: 0 }}>Catálogo de Espacios Disponibles</h1>
+              <h1 style={{ margin: 0, color: '#0f172a' }}>Catálogo de Espacios Disponibles</h1>
               <span>Total: <strong>{pagination.total}</strong> espacios</span>
             </div>
 
